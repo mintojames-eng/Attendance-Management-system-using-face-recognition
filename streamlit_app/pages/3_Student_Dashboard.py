@@ -342,6 +342,9 @@ with tab5:
             sess_id = f"{c_name}_{datetime.now().strftime('%Y-%m-%d')}"
             st.success(f"🔓 Self-Attendance Unlocked: {active_subject}. Closes in {5.0 - elapsed:.1f} mins.")
             
+            from streamlit_autorefresh import st_autorefresh
+            st_autorefresh(interval=5000, limit=None, key="student_autotimer")
+            
     if not active_session:
         st.error("🔒 Camera Locked: A teacher must explicitly open self-attendance from their dashboard first.")
         
