@@ -34,7 +34,50 @@ with col2:
         st.session_state.user = None
         st.switch_page("main.py")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Apply for Leave", "Past Leave Requests", "Face Registration", "Academic Standing", "Self Attendance", "Profile Settings"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Apply for Leave", "Past Leave Requests", "Face Registration", "Academic Standing", "Self Attendance", "Profile Settings", "Personal EDA"])
+
+with tab7:
+    st.subheader("📊 Personal Exploratory Data Analysis")
+    st.write(f"Viewing real-time attendance macro insights for: **{name}**")
+    
+    att_records = list(db.attendance_records.find({"students.name": name}))
+    if not att_records:
+        st.info("Insufficient attendance telemetry logged to compute your personal EDA visuals.")
+    else:
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        
+        subj_counts = {}
+        dates = []
+        for r in att_records:
+            subj = r.get("subject", r.get("department", "General Class"))
+            subj_counts[subj] = subj_counts.get(subj, 0) + 1
+            for s in r.get("students", []):
+                if s.get("name") == name and s.get("present"):
+                    dates.append({"Date": r["session_id"].split("_")[-1]})
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.write("##### Presences By Subject (Bar Chart)")
+            df_bar = pd.DataFrame(list(subj_counts.items()), columns=["Subject", "Total Attended"]).set_index("Subject")
+            st.bar_chart(df_bar)
+            
+        with c2:
+            st.write("##### Daily Activity (Line Chart)")
+            df_time = pd.DataFrame(dates)
+            if not df_time.empty:
+                df_time["Count"] = 1
+                df_trend = df_time.groupby("Date").count()
+                st.line_chart(df_trend)
+                
+        st.write("##### Total Subject Attendance Ratio (Pie Chart)")
+        fig, ax = plt.subplots(figsize=(5,3))
+        # Ensure dark backgrounds in Streamlit don't crush the standard text by setting styling transparent 
+        fig.patch.set_alpha(0.0) 
+        ax.pie(subj_counts.values(), labels=subj_counts.keys(), autopct="%1.1f%%", startangle=90, colors=sns.color_palette("pastel"), textprops={'color':"w"})
+        ax.axis("equal")
+        st.pyplot(fig)
 
 with tab6:
     st.subheader("Profile Settings")
