@@ -119,35 +119,44 @@ with tab2:
         if submit_sess:
             allowed = True
             
+            override_doc = db.global_settings.find_one({"type": "special_event"})
+            admin_bypass = override_doc.get("active", False) if override_doc else False
+            
             # 1. Geo-Fencing Check
             if enforce_geo:
-                try:
-                    res = requests.get("https://ipinfo.io/json", timeout=5).json()
-                    loc = res.get("loc", "0,0").split(",")
-                    t_lat, t_lon = float(loc[0]), float(loc[1])
-                    dist = haversine(INSTITUTION_LAT, INSTITUTION_LON, t_lat, t_lon)
-                    
-                    if dist > 5.0:
-                        st.error(f"📍 Geo-Fence Blocked: You are {dist:.1f}km away from campus. Sessions must be started on-site.")
-                        allowed = False
-                    else:
-                        st.success(f"📍 Geo-Fence Passed: You are {dist:.1f}km from the campus center.")
-                except Exception as e:
-                    st.warning("Could not verify location. Bypassing Geo-Fence securely.")
+                if admin_bypass:
+                    st.warning("🚨 Admin Override Active: Geo-Fence Verification Bypassed for Special Event.")
+                else:
+                    try:
+                        res = requests.get("https://ipinfo.io/json", timeout=5).json()
+                        loc = res.get("loc", "0,0").split(",")
+                        t_lat, t_lon = float(loc[0]), float(loc[1])
+                        dist = haversine(INSTITUTION_LAT, INSTITUTION_LON, t_lat, t_lon)
+                        
+                        if dist > 5.0:
+                            st.error(f"📍 Geo-Fence Blocked: You are {dist:.1f}km away from campus. Contact Admin to activate the Special Event portal.")
+                            allowed = False
+                        else:
+                            st.success(f"📍 Geo-Fence Passed: You are {dist:.1f}km from the campus center.")
+                    except Exception as e:
+                        st.warning("Could not verify location. Bypassing Geo-Fence securely.")
                     
             # 2. Smart Timetable Check
             if allowed and enforce_time:
-                sched = TIMETABLE.get(dept.upper())
-                if not sched:
-                    st.error(f"⏱️ Timetable Blocked: No schedule found for Department '{dept}'. (Try 'IT' or 'CS')")
-                    allowed = False
+                if admin_bypass:
+                    st.warning("🚨 Admin Override Active: Timetable Restrictions Bypassed for Special Event.")
                 else:
-                    curr_time = datetime.now().strftime("%H:%M")
-                    if curr_time < sched["start"] or curr_time > sched["end"]:
-                        st.error(f"⏱️ Timetable Blocked: The '{dept}' schedule is strictly between {sched['start']} and {sched['end']}. It is currently {curr_time}.")
+                    sched = TIMETABLE.get(dept.upper())
+                    if not sched:
+                        st.error(f"⏱️ Timetable Blocked: No schedule found for Department '{dept}'. (Try 'IT' or 'CS')")
                         allowed = False
                     else:
-                        st.success(f"⏱️ Timetable Passed: Session is operating within the legal {sched['start']} - {sched['end']} timeframe.")
+                        curr_time = datetime.now().strftime("%H:%M")
+                        if curr_time < sched["start"] or curr_time > sched["end"]:
+                            st.error(f"⏱️ Timetable Blocked: The '{dept}' schedule is strictly between {sched['start']} and {sched['end']}. It is currently {curr_time}. Contact Admin to activate the Special Event portal.")
+                            allowed = False
+                        else:
+                            st.success(f"⏱️ Timetable Passed: Session is operating within the legal {sched['start']} - {sched['end']} timeframe.")
             
             # Final Approval
             if allowed:

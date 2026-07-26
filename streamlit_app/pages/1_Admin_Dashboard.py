@@ -12,6 +12,19 @@ st.title("🛡️ Super Admin Console")
 st.write(f"Logged in as: {st.session_state.user['name']}")
 
 db = get_db()
+
+st.subheader("Global Security Overrides")
+st.write("Control institution-wide security thresholds and emergency mechanisms.")
+special_mode = db.global_settings.find_one({"type": "special_event"})
+is_special = special_mode.get("active", False) if special_mode else False
+
+if st.checkbox("🚨 Enable Special Event Bypass (Allow Teachers to ignore Geo-Fencing & Timetables)", value=is_special):
+    db.global_settings.update_one({"type": "special_event"}, {"$set": {"active": True}}, upsert=True)
+else:
+    db.global_settings.update_one({"type": "special_event"}, {"$set": {"active": False}}, upsert=True)
+    
+st.divider()
+
 teachers = list(db.auth_teachers.find({}, {"password": 0}))
 
 st.subheader("Teacher Accounts")
