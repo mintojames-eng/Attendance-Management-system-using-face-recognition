@@ -75,16 +75,17 @@ with tab2:
                 cols = st.columns([2, 3, 2, 2, 1])
                 cols[0].write(f"**{s['username']}**")
                 cols[1].write(s['email'])
-                cols[2].write(s.get('status', 'active').capitalize())
+                cols[2].write(f"ID: {s.get('studentId', 'N/A')}")
+                cols[3].write(s.get('status', 'active').capitalize())
                 
                 new_status = "inactive" if s.get('status', 'active') == 'active' else "active"
                 button_label = "Deactivate" if s.get('status', 'active') == 'active' else "Activate"
                 
-                if cols[3].button(button_label, key=f"s_status_{s['_id']}"):
+                if cols[4].button(button_label, key=f"s_status_{s['_id']}"):
                     db.auth_users.update_one({"_id": s["_id"]}, {"$set": {"status": new_status}})
                     st.rerun()
                     
-                if cols[4].button("Delete", key=f"s_del_{s['_id']}", type="primary"):
+                if cols[5].button("Delete", key=f"s_del_{s['_id']}", type="primary"):
                     db.auth_users.delete_one({"_id": s["_id"]})
                     att_db.users.delete_one({"user_id": s["email"]}) # Hard-delete Biometrics
                     st.rerun()

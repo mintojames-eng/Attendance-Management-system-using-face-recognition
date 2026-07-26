@@ -65,6 +65,7 @@ else:
             # Additional fields depending on role
             st.write("---")
             st.write("*Additional Information (If applicable)*")
+            student_id = st.text_input("Student ID (Students Only)")
             employee_id = st.text_input("Employee ID (Teachers Only)")
             admin_code = st.text_input("Admin Code (Admins Only)", type="password", help="Enter '123' for this demo")
             
@@ -80,6 +81,11 @@ else:
                             st.error("Employee ID is required for teachers!")
                             st.stop()
                         extra["employeeId"] = employee_id
+                    elif s_type == "student":
+                        if not student_id:
+                            st.error("Student ID is required for student registration!")
+                            st.stop()
+                        extra["studentId"] = student_id
                     elif s_type == "admin":
                         if not admin_code:
                             st.error("Admin code required to create Super Admin!")

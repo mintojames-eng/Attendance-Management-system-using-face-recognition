@@ -63,7 +63,10 @@ def signup_user(email, password, username, user_type, extra_data=None):
         db.auth_teachers.insert_one(user_doc)
         
     elif user_type == "student":
-        user_doc["role"] = "student"
+        user_doc.update({
+            "studentId": extra_data.get("studentId", ""),
+            "role": "student"
+        })
         db.auth_users.insert_one(user_doc)
         
     return {"success": f"{user_type.title()} account created! You can now log in."}
