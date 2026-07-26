@@ -72,7 +72,7 @@ with tab2:
         
         for s in students:
             with st.container():
-                cols = st.columns([2, 3, 2, 2, 1])
+                cols = st.columns([2, 3, 2, 2, 1, 1])
                 cols[0].write(f"**{s['username']}**")
                 cols[1].write(s['email'])
                 cols[2].write(f"ID: {s.get('studentId', 'N/A')}")
