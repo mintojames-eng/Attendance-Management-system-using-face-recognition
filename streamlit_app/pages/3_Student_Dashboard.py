@@ -27,7 +27,33 @@ name = st.session_state.user['name']
 st.title("🎓 Student Portal")
 st.write(f"Welcome, {name}!")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Apply for Leave", "Past Leave Requests", "Face Registration", "Academic Standing", "Self Attendance"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Apply for Leave", "Past Leave Requests", "Face Registration", "Academic Standing", "Self Attendance", "Profile Settings"])
+
+with tab6:
+    st.subheader("Profile Settings")
+    st.write("Update your account credentials securely.")
+    
+    with st.form("profile_update"):
+        new_name = st.text_input("Full Name", value=name)
+        new_pw = st.text_input("New Password (leave blank to keep current)", type="password")
+        sub_prof = st.form_submit_button("Save Changes", type="primary")
+        
+        if sub_prof:
+            updates = {}
+            if new_name and new_name != name:
+                updates["username"] = new_name
+            if new_pw:
+                import bcrypt
+                updates["password"] = bcrypt.hashpw(new_pw.encode('utf-8'), bcrypt.gensalt()).decode("utf-8")
+                
+            if updates:
+                db.auth_users.update_one({"email": email}, {"$set": updates})
+                if new_name != name:
+                    att_db.users.update_one({"user_id": email}, {"$set": {"name": new_name}})
+                    st.session_state.user["username"] = new_name
+                st.success("Your profile details were rapidly updated across the system!")
+            else:
+                st.info("No modifications detected.")
 
 with tab1:
     st.subheader("Leave Application")

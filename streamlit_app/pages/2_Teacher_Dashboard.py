@@ -58,14 +58,36 @@ with tab1:
 with tab2:
     if "popped_present" in st.session_state:
         st.success("Session Ended and attendance saved securely to MongoDB.")
-        with st.expander("✅ See Who Was Marked Present", expanded=True):
-            if st.session_state.popped_present:
-                for name in st.session_state.popped_present:
-                    st.write(f"- {name}")
-            else:
-                st.write("No students were recognized.")
+        with st.expander("✅ See Session Results", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("### Present")
+                if st.session_state.popped_present:
+                    for name in st.session_state.popped_present:
+                        st.write(f"- {name}")
+                else:
+                    st.write("None")
+                    
+            with col2:
+                st.write("### Absent")
+                if "popped_absent" in st.session_state and st.session_state.popped_absent:
+                    for name in st.session_state.popped_absent:
+                        st.write(f"- {name}")
+                else:
+                    st.write("None")
+                    
+            # Generate CSV seamlessly here
+            csv_str = "Student Name,Attendance Status\\n"
+            for n in st.session_state.popped_present: csv_str += f"{n},Present\\n"
+            if "popped_absent" in st.session_state:
+                for n in st.session_state.popped_absent: csv_str += f"{n},Absent\\n"
+                
+            st.download_button("📥 Download Final Roster (.csv)", data=csv_str.encode('utf-8'), file_name=f"{st.session_state.get('popped_sess_id', 'Session')}_Report.csv", mime="text/csv", type="primary")
+            
             if st.button("Close Window"):
                 del st.session_state.popped_present
+                if "popped_absent" in st.session_state: del st.session_state.popped_absent
+                if "popped_sess_id" in st.session_state: del st.session_state.popped_sess_id
                 st.rerun()
 
     st.subheader("Start Attendance Session")
@@ -241,11 +263,16 @@ with tab2:
                 date_key = datetime.now().strftime("%Y-%m-%d")
                 sess_id = f"{st.session_state.current_session['session_code']}_{date_key}"
                 record = db.attendance_records.find_one({"session_id": sess_id})
-                if record:
-                    st.session_state.popped_present = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")])))
-                else:
-                    st.session_state.popped_present = []
-                    
+                
+                # Calculate Present vs Absent
+                present_names = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")]))) if record else []
+                all_students = [u["name"] for u in list(att_db.users.find())]
+                absent_names = sorted([n for n in all_students if n not in present_names])
+                
+                st.session_state.popped_present = present_names
+                st.session_state.popped_absent = absent_names
+                st.session_state.popped_sess_id = sess_id
+                
                 db.active_sessions.delete_one({"teacher_email": st.session_state.user['email']})
                 del st.session_state.current_session
                 st.rerun()
