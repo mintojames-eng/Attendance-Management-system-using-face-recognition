@@ -209,7 +209,7 @@ with tab2:
         st.write("### Camera Live Feed")
         st.info(f"⏳ Session Auto-Closes in: {5.0 - elapsed:.1f} minutes.")
         
-        # Schedule Javascript to violently force a Steamlit Rerun at exact timeout to force CSV generation natively natively
+        # Schedule Javascript to violently force a Steamlit Rerun at exact timeout to force CSV generation natively
         ms_left = max(0, (5.0 - elapsed) * 60 * 1000)
         import streamlit.components.v1 as components
         components.html(f"<script>setTimeout(function(){{ window.parent.location.reload(); }}, {ms_left});</script>", height=0, width=0)
@@ -303,7 +303,7 @@ with tab2:
             
             webrtc_streamer(key="attendance", video_processor_factory=FaceCapture, rtc_configuration=RTC_CONFIG)
             
-            if st.button("End Session & Finalize Attendance"):
+            if st.button("🛑 Stop Session & Finalize Attendance", type="primary"):
                 date_key = datetime.now().strftime("%Y-%m-%d")
                 sess_id = f"{st.session_state.current_session['session_code']}_{date_key}"
                 record = db.attendance_records.find_one({"session_id": sess_id})
