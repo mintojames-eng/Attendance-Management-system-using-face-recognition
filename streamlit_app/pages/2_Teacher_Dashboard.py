@@ -200,6 +200,14 @@ with tab2:
                     
                 def process_frame(self, rgb_image):
                     try:
+                        if "current_session" in st.session_state:
+                            session_time = st.session_state.current_session.get("created_at", datetime.now())
+                            if (datetime.now() - session_time).total_seconds() / 60.0 > 5.0:
+                                with self.lock:
+                                    self.last_faces = [{'box': (10, 30, 0, 0), 'text': "SESSION EXPIRED", 'color': (0,0,255)}]
+                                self.is_processing = False
+                                return
+                                
                         faces = self.detector.detect_faces(rgb_image)
                         temp_faces = []
                         for face in faces:
