@@ -1,0 +1,8 @@
+[theme]
+# Primary accent color (Vibrant Neon Green/Cyan)
+primaryColor = "#00E096"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#1E222A"
+textColor = "#FFFFFF"
+font = "sans serif"
+base = "dark"
