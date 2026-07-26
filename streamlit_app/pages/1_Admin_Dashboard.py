@@ -8,8 +8,15 @@ if "user" not in st.session_state or not st.session_state.user or st.session_sta
     st.error("Admin Access Required. Please login from the main page.")
     st.stop()
     
-st.title("🛡️ Super Admin Console")
-st.write(f"Logged in as: {st.session_state.user['name']}")
+col1, col2 = st.columns([5, 1])
+with col1:
+    st.title("🛡️ Super Admin Console")
+    st.write(f"Logged in as: {st.session_state.user['name']}")
+with col2:
+    st.write("")
+    if st.button("Logout 🚪", type="secondary"):
+        st.session_state.user = None
+        st.switch_page("main.py")
 
 db = get_db()
 

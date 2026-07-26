@@ -24,8 +24,15 @@ att_db = get_attendance_db()
 email = st.session_state.user['email']
 name = st.session_state.user['name']
 
-st.title("🎓 Student Portal")
-st.write(f"Welcome, {name}!")
+col1, col2 = st.columns([5, 1])
+with col1:
+    st.title("🎓 Student Portal")
+    st.write(f"Welcome, {name}!")
+with col2:
+    st.write("") # Spacing
+    if st.button("Logout 🚪", type="secondary"):
+        st.session_state.user = None
+        st.switch_page("main.py")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Apply for Leave", "Past Leave Requests", "Face Registration", "Academic Standing", "Self Attendance", "Profile Settings"])
 
