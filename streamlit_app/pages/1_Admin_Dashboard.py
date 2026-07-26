@@ -41,23 +41,35 @@ with tab1:
         st.info("No teachers registered yet.")
     else:
         for t in teachers:
-            with st.container():
-                cols = st.columns([2, 2, 2, 2, 1, 1])
-                cols[0].write(f"**{t['username']}**")
-                cols[1].write(t['email'])
-                cols[2].write(f"ID: {t.get('employeeId', 'N/A')}")
-                cols[3].write(t.get('status', 'inactive').capitalize())
-                
-                new_status = "inactive" if t.get('status') == 'active' else "active"
-                button_label = "Deactivate" if t.get('status') == 'active' else "Activate"
-                
-                if cols[4].button(button_label, key=f"status_{t['_id']}"):
-                    db.auth_teachers.update_one({"_id": t["_id"]}, {"$set": {"status": new_status}})
-                    st.rerun()
+            with st.expander(f"🧑‍🏫 {t['username']} - {t['email']}"):
+                with st.container():
+                    cols = st.columns([2, 2, 2, 2, 1, 1])
+                    cols[0].write(f"**{t['username']}**")
+                    cols[1].write(t['email'])
+                    cols[2].write(f"ID: {t.get('employeeId', 'N/A')}")
+                    cols[3].write(t.get('status', 'inactive').capitalize())
                     
-                if cols[5].button("Delete", key=f"del_{t['_id']}", type="primary"):
-                    db.auth_teachers.delete_one({"_id": t["_id"]})
-                    st.rerun()
+                    new_status = "inactive" if t.get('status') == 'active' else "active"
+                    button_label = "Deactivate" if t.get('status') == 'active' else "Activate"
+                    
+                    if cols[4].button(button_label, key=f"status_{t['_id']}"):
+                        db.auth_teachers.update_one({"_id": t["_id"]}, {"$set": {"status": new_status}})
+                        st.rerun()
+                        
+                    if cols[5].button("Delete", key=f"del_{t['_id']}", type="primary"):
+                        db.auth_teachers.delete_one({"_id": t["_id"]})
+                        st.rerun()
+                        
+                st.write("---")
+                st.markdown(f"**Registered Department:** `{t.get('department', 'N/A')}`")
+                
+                # Fetch dynamically all historical subjects this teacher created sessions for
+                taught = list(db.attendance_records.find({"created_by": t['email']}))
+                subjs_taught = list(set([rec.get('subject', 'Unknown') for rec in taught]))
+                if subjs_taught:
+                    st.markdown(f"**Historical Subjects Taught:** `{', '.join(subjs_taught)}`")
+                else:
+                    st.write("**Historical Subjects Taught:** None logged dynamically yet.")
                 st.divider()
 
 with tab2:
@@ -71,22 +83,34 @@ with tab2:
         att_db = get_attendance_db()
         
         for s in students:
-            with st.container():
-                cols = st.columns([2, 3, 2, 2, 1, 1])
-                cols[0].write(f"**{s['username']}**")
-                cols[1].write(s['email'])
-                cols[2].write(f"ID: {s.get('studentId', 'N/A')}")
-                cols[3].write(s.get('status', 'active').capitalize())
-                
-                new_status = "inactive" if s.get('status', 'active') == 'active' else "active"
-                button_label = "Deactivate" if s.get('status', 'active') == 'active' else "Activate"
-                
-                if cols[4].button(button_label, key=f"s_status_{s['_id']}"):
-                    db.auth_users.update_one({"_id": s["_id"]}, {"$set": {"status": new_status}})
-                    st.rerun()
+            with st.expander(f"🎓 {s['username']} - {s['email']}"):
+                with st.container():
+                    cols = st.columns([2, 3, 2, 2, 1, 1])
+                    cols[0].write(f"**{s['username']}**")
+                    cols[1].write(s['email'])
+                    cols[2].write(f"ID: {s.get('studentId', 'N/A')}")
+                    cols[3].write(s.get('status', 'active').capitalize())
                     
-                if cols[5].button("Delete", key=f"s_del_{s['_id']}", type="primary"):
-                    db.auth_users.delete_one({"_id": s["_id"]})
-                    att_db.users.delete_one({"user_id": s["email"]}) # Hard-delete Biometrics
-                    st.rerun()
+                    new_status = "inactive" if s.get('status', 'active') == 'active' else "active"
+                    button_label = "Deactivate" if s.get('status', 'active') == 'active' else "Activate"
+                    
+                    if cols[4].button(button_label, key=f"s_status_{s['_id']}"):
+                        db.auth_users.update_one({"_id": s["_id"]}, {"$set": {"status": new_status}})
+                        st.rerun()
+                        
+                    if cols[5].button("Delete", key=f"s_del_{s['_id']}", type="primary"):
+                        db.auth_users.delete_one({"_id": s["_id"]})
+                        att_db.users.delete_one({"user_id": s["email"]}) # Hard-delete Biometrics
+                        st.rerun()
+                        
+                st.write("---")
+                st.markdown("**Enrolled Course:** `MSc AIML (Master Cohort)`")
+                
+                # Dynamically scan macro network for classes attended
+                student_att = list(db.attendance_records.find({"students.name": s['username']}))
+                subjs_attended = list(set([rec.get('subject', 'Unknown') for rec in student_att]))
+                if subjs_attended:
+                    st.markdown(f"**Active Subjects Participating In:** `{', '.join(subjs_attended)}`")
+                else:
+                    st.write("**Active Subjects:** No structural attendance points recorded yet.")
                 st.divider()
