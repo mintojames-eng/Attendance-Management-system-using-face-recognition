@@ -32,29 +32,60 @@ else:
     
 st.divider()
 
-teachers = list(db.auth_teachers.find({}, {"password": 0}))
+tab1, tab2 = st.tabs(["🧑‍🏫 Teacher Management", "🎓 Student Management"])
 
-st.subheader("Teacher Accounts")
-
-if not teachers:
-    st.info("No teachers registered yet.")
-else:
-    for t in teachers:
-        with st.container():
-            cols = st.columns([2, 2, 2, 2, 1, 1])
-            cols[0].write(f"**{t['username']}**")
-            cols[1].write(t['email'])
-            cols[2].write(f"ID: {t.get('employeeId', 'N/A')}")
-            cols[3].write(t.get('status', 'inactive').capitalize())
-            
-            new_status = "inactive" if t.get('status') == 'active' else "active"
-            button_label = "Deactivate" if t.get('status') == 'active' else "Activate"
-            
-            if cols[4].button(button_label, key=f"status_{t['_id']}"):
-                db.auth_teachers.update_one({"_id": t["_id"]}, {"$set": {"status": new_status}})
-                st.rerun()
+with tab1:
+    st.subheader("Teacher Accounts")
+    teachers = list(db.auth_teachers.find({}, {"password": 0}))
+    if not teachers:
+        st.info("No teachers registered yet.")
+    else:
+        for t in teachers:
+            with st.container():
+                cols = st.columns([2, 2, 2, 2, 1, 1])
+                cols[0].write(f"**{t['username']}**")
+                cols[1].write(t['email'])
+                cols[2].write(f"ID: {t.get('employeeId', 'N/A')}")
+                cols[3].write(t.get('status', 'inactive').capitalize())
                 
-            if cols[5].button("Delete", key=f"del_{t['_id']}", type="primary"):
-                db.auth_teachers.delete_one({"_id": t["_id"]})
-                st.rerun()
-            st.divider()
+                new_status = "inactive" if t.get('status') == 'active' else "active"
+                button_label = "Deactivate" if t.get('status') == 'active' else "Activate"
+                
+                if cols[4].button(button_label, key=f"status_{t['_id']}"):
+                    db.auth_teachers.update_one({"_id": t["_id"]}, {"$set": {"status": new_status}})
+                    st.rerun()
+                    
+                if cols[5].button("Delete", key=f"del_{t['_id']}", type="primary"):
+                    db.auth_teachers.delete_one({"_id": t["_id"]})
+                    st.rerun()
+                st.divider()
+
+with tab2:
+    st.subheader("Student Accounts")
+    students = list(db.auth_users.find({}, {"password": 0}))
+    if not students:
+        st.info("No students registered yet.")
+    else:
+        # We need the biometrics DB to hard-delete facial arrays if a student is purged
+        from utils.database import get_attendance_db
+        att_db = get_attendance_db()
+        
+        for s in students:
+            with st.container():
+                cols = st.columns([2, 3, 2, 2, 1])
+                cols[0].write(f"**{s['username']}**")
+                cols[1].write(s['email'])
+                cols[2].write(s.get('status', 'active').capitalize())
+                
+                new_status = "inactive" if s.get('status', 'active') == 'active' else "active"
+                button_label = "Deactivate" if s.get('status', 'active') == 'active' else "Activate"
+                
+                if cols[3].button(button_label, key=f"s_status_{s['_id']}"):
+                    db.auth_users.update_one({"_id": s["_id"]}, {"$set": {"status": new_status}})
+                    st.rerun()
+                    
+                if cols[4].button("Delete", key=f"s_del_{s['_id']}", type="primary"):
+                    db.auth_users.delete_one({"_id": s["_id"]})
+                    att_db.users.delete_one({"user_id": s["email"]}) # Hard-delete Biometrics
+                    st.rerun()
+                st.divider()
