@@ -237,7 +237,7 @@ with tab2:
                                         {"session_id": f"{st.session_state.current_session['session_code']}_{date_key}"},
                                         {"$set": {"department": st.session_state.current_session.get("department", "Unknown"), 
                                                   "year": st.session_state.current_session.get("year", "Unknown")},
-                                         "$addToSet": {"students": {"name": label, "present": True, "timestamp": time.time()}}},
+                                         "$addToSet": {"students": {"name": label, "present": True}}},
                                         upsert=True
                                     )
                                             
@@ -317,6 +317,9 @@ with tab3:
         
         if flat_data:
             df = pd.DataFrame(flat_data)
+            
+            # Retroactively drop duplicate logs from legacy sessions
+            df = df.drop_duplicates(subset=["Date & Time", "Student Name", "Status"])
             
             st.write("### 📊 View Attendance Percentages")
             subjects = list(set([r.get("subject", "N/A") for r in records if "subject" in r]))
