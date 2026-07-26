@@ -117,7 +117,7 @@ with tab2:
         session_code = st.text_input("Session Code (e.g. DS101)")
         
         st.markdown("### 🔒 Security Gates & Parameters")
-        enforce_geo = st.checkbox("Enforce Geo-Fencing (Must be within 5km of Campus)", value=True)
+        enforce_geo = st.checkbox("Enforce Geo-Fencing (Within Campus)", value=True)
         is_extra = st.checkbox("🌟 Mark as 'Extra Class / Special Session' (Bypasses Timetable Lock)", value=False)
         extra_desc = st.text_input("Extra Class Description (e.g. Midterm Prep, Cultural Event, Extra Lab)") if is_extra else ""
         allow_self = st.checkbox("Grant Students Permission for Self Attendance", value=False)
