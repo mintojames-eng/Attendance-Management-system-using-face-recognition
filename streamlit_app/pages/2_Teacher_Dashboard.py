@@ -119,6 +119,7 @@ with tab2:
         st.markdown("### 🔒 Security Gates & Parameters")
         enforce_geo = st.checkbox("Enforce Geo-Fencing (Must be within 5km of Campus)", value=True)
         is_extra = st.checkbox("🌟 Mark as 'Extra Class / Special Session' (Bypasses Timetable Lock)", value=False)
+        extra_desc = st.text_input("Extra Class Description (e.g. Midterm Prep, Cultural Event, Extra Lab)") if is_extra else ""
         allow_self = st.checkbox("Grant Students Permission for Self Attendance", value=False)
         
         submit_sess = st.form_submit_button("Create Session", type="primary")
@@ -169,7 +170,7 @@ with tab2:
                     st.warning("🚨 Admin Override Active: Timetable Restrictions Bypassed for Special Event.")
                 else:
                     st.success("🌟 Extra Class Authorized: Standard Timetable bypassed securely.")
-                    subject = f"{subject} (Extra Class)"
+                    subject = f"{subject} (Extra Class: {extra_desc})" if extra_desc else f"{subject} (Extra Class)"
             
             # Final Approval
             if allowed:
@@ -344,6 +345,7 @@ with tab3:
                 flat_data.append({
                     "Date & Time": sess_date,
                     "Department": dept,
+                    "Subject & Event Details": r.get("subject", "N/A"),
                     "Year": yr,
                     "Student ID": student.get("student_id"),
                     "Student Name": student.get("name"),
