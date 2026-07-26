@@ -140,8 +140,21 @@ with tab2:
                 st.success("Session configured and live!")
     
     if "current_session" in st.session_state:
+        # 5 Minute Auto-Timeout Check
+        elapsed = (datetime.now() - st.session_state.current_session["created_at"]).total_seconds() / 60.0
+        if elapsed > 5.0:
+            date_key = datetime.now().strftime("%Y-%m-%d")
+            sess_id = f"{st.session_state.current_session['session_code']}_{date_key}"
+            record = db.attendance_records.find_one({"session_id": sess_id})
+            st.session_state.popped_present = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")]))) if record else []
+            
+            db.active_sessions.delete_one({"teacher_email": st.session_state.user['email']})
+            del st.session_state.current_session
+            st.rerun()
+
         st.write("---")
         st.write("### Camera Live Feed")
+        st.info(f"⏳ Session Auto-Closes in: {5.0 - elapsed:.1f} minutes.")
         try:
             from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
             from mtcnn import MTCNN

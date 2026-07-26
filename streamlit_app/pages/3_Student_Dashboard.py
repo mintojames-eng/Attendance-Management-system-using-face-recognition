@@ -246,12 +246,31 @@ with tab5:
             
     active_session = db.active_sessions.find_one({"active": True, "allow_self": True})
     active_subject = None
+    sess_id = ""
     
     if active_session:
-        active_subject = active_session.get("department", "Authorized Session") + " (" + active_session.get("year", "") + ")"
-        st.success(f"🔓 Self-Attendance Unlocked: {active_subject}")
-    else:
+        elapsed = (datetime.now() - active_session["created_at"]).total_seconds() / 60.0
+        if elapsed > 5.0:
+            db.active_sessions.delete_one({"_id": active_session["_id"]})
+            active_session = None
+            st.error("🔒 The active session has expired (5-minute timeout reached).")
+        else:
+            active_subject = f"{active_session.get('department', '')}_{active_session.get('subject', '')} ({active_session.get('session_code', '')})"
+            sess_id = f"{active_session.get('session_code', '')}_{datetime.now().strftime('%Y-%m-%d')}"
+            st.success(f"🔓 Self-Attendance Unlocked: {active_subject}. Closes in {5.0 - elapsed:.1f} mins.")
+            
+    if not active_session:
         st.error("🔒 Camera Locked: A teacher must explicitly open self-attendance from their dashboard first.")
+        
+    # Check if student was successfully marked for ANY session today so they aren't anxious
+    today_date = datetime.now().strftime('%Y-%m-%d')
+    recent_record = db.attendance_records.find_one({
+        "session_id": {"$regex": today_date},
+        "students": {"$elemMatch": {"name": name, "present": True}}
+    })
+    
+    if recent_record:
+        st.success(f"✅ RELAX! Your attendance was successfully recorded today for: **{recent_record.get('subject', 'Class')}**")
             
     if active_subject:
         # Load user data natively
