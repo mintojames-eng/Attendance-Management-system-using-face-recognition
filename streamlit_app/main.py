@@ -2,8 +2,10 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from utils.auth import login_user, signup_user
+from utils.ui import apply_custom_css
 
 st.set_page_config(page_title="Attendance System", page_icon="🎓", layout="wide")
+apply_custom_css()
 
 load_dotenv()
 

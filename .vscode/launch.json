@@ -2,10 +2,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Flask",
+            "name": "Python: Streamlit",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/backend/app.py",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "${workspaceFolder}/streamlit_app/main.py"
+            ],
             "console": "integratedTerminal"
         }
     ]

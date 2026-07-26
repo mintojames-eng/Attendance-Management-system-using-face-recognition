@@ -1,8 +1,9 @@
 import streamlit as st
 from utils.database import get_db
+from utils.ui import apply_custom_css
 
-st.set_page_config(page_title="Admin Console", page_icon="🛡️")
-
+st.set_page_config(page_title="Admin Console", page_icon="🛡️", layout="wide")
+apply_custom_css()
 if "user" not in st.session_state or not st.session_state.user or st.session_state.user.get("role") != "admin":
     st.error("Admin Access Required. Please login from the main page.")
     st.stop()

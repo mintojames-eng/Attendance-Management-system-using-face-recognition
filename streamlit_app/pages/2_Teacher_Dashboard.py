@@ -5,8 +5,6 @@ import pandas as pd
 import requests
 import math
 import threading
-import requests
-import math
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371.0 # Earth radius in km
@@ -16,7 +14,10 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
+import streamlit as st
+from utils.ui import apply_custom_css
 st.set_page_config(page_title="Teacher Dashboard", page_icon="🏫", layout="wide")
+apply_custom_css()
 
 if "user" not in st.session_state or not st.session_state.user or st.session_state.user.get("role") != "teacher":
     st.error("Teacher Access Required.")
@@ -55,6 +56,18 @@ with tab1:
             st.divider()
 
 with tab2:
+    if "popped_present" in st.session_state:
+        st.success("Session Ended and attendance saved securely to MongoDB.")
+        with st.expander("✅ See Who Was Marked Present", expanded=True):
+            if st.session_state.popped_present:
+                for name in st.session_state.popped_present:
+                    st.write(f"- {name}")
+            else:
+                st.write("No students were recognized.")
+            if st.button("Close Window"):
+                del st.session_state.popped_present
+                st.rerun()
+
     st.subheader("Start Attendance Session")
     st.warning("WebRTC integration for production requires HTTPS and STUN/TURN servers.")
     
@@ -75,6 +88,7 @@ with tab2:
         st.markdown("### 🔒 Security Gates")
         enforce_geo = st.checkbox("Enforce Geo-Fencing (Must be within 5km of Campus)", value=True)
         enforce_time = st.checkbox("Enforce Smart Timetable (Must be within scheduled hours)", value=True)
+        allow_self = st.checkbox("Grant Students Permission for Self Attendance", value=False)
         
         submit_sess = st.form_submit_button("Create Session", type="primary")
         
@@ -116,99 +130,108 @@ with tab2:
                 st.session_state.current_session = {
                     "department": dept, "year": year, "created_at": datetime.now()
                 }
+                db.active_sessions.update_one(
+                    {"teacher_email": st.session_state.user['email']},
+                    {"$set": {"department": dept, "year": year, "allow_self": allow_self, "active": True}},
+                    upsert=True
+                )
                 st.success("Session configured and live!")
     
     if "current_session" in st.session_state:
         st.write("---")
         st.write("### Camera Live Feed")
         try:
-            from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+            from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
             from mtcnn import MTCNN
             from deepface import DeepFace
             from scipy.spatial.distance import cosine
+            import av
+            
+            RTC_CONFIG = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
             
             # Fetch all user embeddings from DB natively
             users_in_db = list(att_db.users.find())
             
-            class FaceCapture(VideoTransformerBase):
+            class FaceCapture(VideoProcessorBase):
                 def __init__(self):
                     self.detector = MTCNN()
                     self.users = users_in_db
-                    self.threshold = 0.7
-                    self.last_faces = []
                     self.lock = threading.Lock()
+                    self.last_faces = []
                     self.is_processing = False
                     
                 def process_frame(self, rgb_image):
-                    temp_faces = []
                     try:
                         faces = self.detector.detect_faces(rgb_image)
+                        temp_faces = []
                         for face in faces:
                             x, y, w, h = face['box']
-                            x, y = max(0, x), max(0, y)
-                            face_img = rgb_image[y:y+h, x:x+w]
+                            face_img = rgb_image[max(0,y):y+h, max(0,x):x+w]
                             
-                            try:
-                                embedding_res = DeepFace.represent(face_img, model_name='Facenet512', detector_backend='skip', enforce_detection=False)
-                                if embedding_res:
-                                    embedding = embedding_res[0]['embedding']
-                                    best_match = None
-                                    min_distance = float('inf')
-                                    
-                                    for user in self.users:
-                                        if 'embedding' in user:
-                                            distance = cosine(embedding, user['embedding'])
-                                            if distance < min_distance:
-                                                min_distance = distance
-                                                best_match = user
-                                                
-                                    if min_distance < self.threshold and best_match:
-                                        name_text = f"{best_match['name']}"
-                                        color = (0, 255, 0)
-                                        # Background save
-                                        db.attendance_records.update_one(
-                                            {"session_id": str(st.session_state.current_session["created_at"])},
-                                            {"$set": {"department": st.session_state.current_session["department"], "year": st.session_state.current_session["year"]},
-                                             "$addToSet": {"students": {"student_id": best_match["user_id"], "name": best_match["name"], "present": True, "timestamp": time.time()}}},
-                                            upsert=True
-                                        )
-                                    else:
-                                        name_text = "Unknown"
-                                        color = (0, 0, 255)
-                                        
-                                    temp_faces.append({'box': (x,y,w,h), 'text': name_text, 'color': color})
-                            except Exception:
-                                pass
-                    except Exception:
+                            res = DeepFace.represent(face_img, model_name='Facenet512', detector_backend='skip', enforce_detection=False)
+                            label = "Unknown"
+                            color = (0, 0, 255) # Red
+                            
+                            if res:
+                                live_embed = res[0]['embedding']
+                                # Find best match
+                                best_dist = float('inf')
+                                for u in self.users:
+                                    if 'embedding' in u:
+                                        dist = cosine(live_embed, u['embedding'])
+                                        if dist < best_dist and dist < 0.7:
+                                            best_dist = dist
+                                            label = u['name']
+                                            color = (0, 255, 0) # Green
+                                            
+                                # Auto Log if known!
+                                if label != "Unknown":
+                                    date_key = datetime.now().strftime("%Y-%m-%d")
+                                    db.attendance_records.update_one(
+                                        {"session_id": f"{st.session_state.current_session['session_code']}_{date_key}"},
+                                        {"$set": {"department": st.session_state.current_session.get("department", "Unknown"), 
+                                                  "year": st.session_state.current_session.get("year", "Unknown")},
+                                         "$addToSet": {"students": {"name": label, "present": True, "timestamp": time.time()}}},
+                                        upsert=True
+                                    )
+                                            
+                            temp_faces.append({'box': (x,y,w,h), 'text': label, 'color': color})
+                            
+                        with self.lock:
+                            self.last_faces = temp_faces
+                    except:
                         pass
-                        
-                    with self.lock:
-                        self.last_faces = temp_faces
                     self.is_processing = False
                     
-                def transform(self, frame):
+                def recv(self, frame):
                     img = frame.to_ndarray(format="bgr24")
                     
                     if not self.is_processing:
                         self.is_processing = True
                         rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                        # Offload AI completely to background thread to preserve 30fps camera!
                         threading.Thread(target=self.process_frame, args=(rgb_image,)).start()
 
-                    # Draw the bounding boxes smoothly on the main thread
                     with self.lock:
                         for face in self.last_faces:
                             x, y, w, h = face['box']
                             cv2.rectangle(img, (x, y), (x+w, y+h), face['color'], 2)
                             cv2.putText(img, face['text'], (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, face['color'], 2)
 
-                    return img
+                    return av.VideoFrame.from_ndarray(img, format="bgr24")
             
-            webrtc_streamer(key="attendance", video_transformer_factory=FaceCapture)
+            webrtc_streamer(key="attendance", video_processor_factory=FaceCapture, rtc_configuration=RTC_CONFIG)
             
             if st.button("End Session & Finalize Attendance"):
+                date_key = datetime.now().strftime("%Y-%m-%d")
+                sess_id = f"{st.session_state.current_session['session_code']}_{date_key}"
+                record = db.attendance_records.find_one({"session_id": sess_id})
+                if record:
+                    st.session_state.popped_present = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")])))
+                else:
+                    st.session_state.popped_present = []
+                    
+                db.active_sessions.delete_one({"teacher_email": st.session_state.user['email']})
                 del st.session_state.current_session
-                st.success("Session Ended and attendance saved securely to MongoDB.")
                 st.rerun()
                 
         except ImportError:
@@ -243,6 +266,32 @@ with tab3:
         
         if flat_data:
             df = pd.DataFrame(flat_data)
+            
+            st.write("### 📊 View Attendance Percentages")
+            subjects = list(set([r.get("subject", "N/A") for r in records if "subject" in r]))
+            selected_subject = st.selectbox("Pick any subject to view percentage:", ["-- Select --"] + subjects)
+            
+            if selected_subject != "-- Select --":
+                subj_records = [r for r in records if r.get("subject") == selected_subject]
+                total_classes = len(subj_records)
+                
+                attendance_counts = {}
+                for r in subj_records:
+                    present_students = set([s["name"] for s in r.get("students", []) if s.get("present")])
+                    for student in present_students:
+                        attendance_counts[student] = attendance_counts.get(student, 0) + 1
+                
+                if attendance_counts:
+                    pct_data = []
+                    for s, count in attendance_counts.items():
+                        pct = (count / total_classes) * 100
+                        pct_data.append({"Student": s, "Classes Attended": count, "Total Classes": total_classes, "Attendance %": f"{pct:.1f}%"})
+                    pct_df = pd.DataFrame(pct_data).sort_values(by="Attendance %", ascending=False)
+                    st.dataframe(pct_df, use_container_width=True)
+                else:
+                    st.info("No attendance recorded for this subject yet.")
+            
+            st.write("---")
             
             # High-level Metrics
             total_sessions = len(records)
