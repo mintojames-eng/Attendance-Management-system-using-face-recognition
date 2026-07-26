@@ -12,7 +12,8 @@ def apply_custom_css():
             /* Hide Streamlit Branding */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
-            header {visibility: hidden;}
+            .stDeployButton {display:none;}
+            header {background: transparent;}
             
             /* Buttons Styling */
             .stButton > button {
