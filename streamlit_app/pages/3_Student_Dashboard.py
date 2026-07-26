@@ -334,8 +334,12 @@ with tab5:
             active_session = None
             st.error("🔒 The active session has expired (5-minute timeout reached).")
         else:
-            active_subject = f"{active_session.get('department', '')}_{active_session.get('subject', '')} ({active_session.get('session_code', '')})"
-            sess_id = f"{active_session.get('session_code', '')}_{datetime.now().strftime('%Y-%m-%d')}"
+            d_name = active_session.get('department') or 'General'
+            s_name = active_session.get('subject') or 'Class'
+            c_name = active_session.get('session_code') or 'None'
+            
+            active_subject = f"{d_name}_{s_name} ({c_name})"
+            sess_id = f"{c_name}_{datetime.now().strftime('%Y-%m-%d')}"
             st.success(f"🔓 Self-Attendance Unlocked: {active_subject}. Closes in {5.0 - elapsed:.1f} mins.")
             
     if not active_session:

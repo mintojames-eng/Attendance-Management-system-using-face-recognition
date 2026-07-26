@@ -208,6 +208,12 @@ with tab2:
         st.write("---")
         st.write("### Camera Live Feed")
         st.info(f"⏳ Session Auto-Closes in: {5.0 - elapsed:.1f} minutes.")
+        
+        # Schedule Javascript to violently force a Steamlit Rerun at exact timeout to force CSV generation natively natively
+        ms_left = max(0, (5.0 - elapsed) * 60 * 1000)
+        import streamlit.components.v1 as components
+        components.html(f"<script>setTimeout(function(){{ window.parent.location.reload(); }}, {ms_left});</script>", height=0, width=0)
+        
         try:
             from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
             from mtcnn import MTCNN
