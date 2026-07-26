@@ -49,7 +49,7 @@ def signup_user(email, password, username, user_type, extra_data=None):
     }
     
     if user_type == "admin":
-        if extra_data and extra_data.get("adminCode") != "supersecret": # hardcoded for demo, normally os.getenv
+        if extra_data and extra_data.get("adminCode") != "123": # hardcoded for demo
             return {"error": "Invalid admin authorization code."}
         user_doc["role"] = "admin"
         db.auth_admins.insert_one(user_doc)

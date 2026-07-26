@@ -66,7 +66,7 @@ else:
             st.write("---")
             st.write("*Additional Information (If applicable)*")
             employee_id = st.text_input("Employee ID (Teachers Only)")
-            admin_code = st.text_input("Admin Code (Admins Only)", type="password", help="Enter 'supersecret' for this demo")
+            admin_code = st.text_input("Admin Code (Admins Only)", type="password", help="Enter '123' for this demo")
             
             s_submitted = st.form_submit_button("Sign Up")
             
