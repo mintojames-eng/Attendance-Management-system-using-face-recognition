@@ -413,6 +413,43 @@ with tab3:
                 mime='text/csv',
                 type="primary"
             )
+            
+            st.divider()
+            st.subheader("📈 Institutional Exploratory Data Analysis (EDA)")
+            st.write("View overarching statistical variance and density mappings across all active classes.")
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            
+            e1, e2 = st.columns(2)
+            
+            with e1:
+                st.write("##### Course Distribution Volume (Pie Chart)")
+                subj_dist = {}
+                for r in records:
+                    s_tag = r.get("subject", "Uncategorized")
+                    subj_dist[s_tag] = subj_dist.get(s_tag, 0) + 1
+                if subj_dist:
+                    fig, ax = plt.subplots(figsize=(5,4))
+                    fig.patch.set_alpha(0.0) 
+                    ax.pie(subj_dist.values(), labels=subj_dist.keys(), autopct="%1.1f%%", startangle=90, colors=sns.color_palette("viridis"))
+                    ax.axis("equal")
+                    st.pyplot(fig)
+            
+            with e2:
+                st.write("##### Academic Variance By Department (Box Plot)")
+                all_grades = list(db.academic_grades.find())
+                if not all_grades:
+                    st.info("No grades published to map academic distribution.")
+                else:
+                    g_pts = [{"Sector": g.get("subject", "General"), "Score (%)": (g["score"] / g["max_score"]) * 100} for g in all_grades]
+                    df_bp = pd.DataFrame(g_pts)
+                    fig2, ax2 = plt.subplots(figsize=(6,4))
+                    fig2.patch.set_alpha(0.0)
+                    sns.boxplot(data=df_bp, x="Score (%)", y="Sector", orient="h", ax=ax2, palette="magma")
+                    ax2.set_xlabel("Score Percentage (%)", color="#b0b5c4")
+                    ax2.set_ylabel("", color="#b0b5c4")
+                    ax2.tick_params(colors="#b0b5c4")
+                    st.pyplot(fig2)
 
 with tab4:
     st.subheader("Academic Grading Hub")
