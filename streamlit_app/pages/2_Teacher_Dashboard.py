@@ -109,9 +109,9 @@ with tab2:
         subject = st.text_input("Subject (e.g. Data Structures)")
         session_code = st.text_input("Session Code (e.g. DS101)")
         
-        st.markdown("### 🔒 Security Gates")
+        st.markdown("### 🔒 Security Gates & Parameters")
         enforce_geo = st.checkbox("Enforce Geo-Fencing (Must be within 5km of Campus)", value=True)
-        enforce_time = st.checkbox("Enforce Smart Timetable (Must be within scheduled hours)", value=True)
+        is_extra = st.checkbox("🌟 Mark as 'Extra Class / Special Session' (Bypasses Timetable Lock)", value=False)
         allow_self = st.checkbox("Grant Students Permission for Self Attendance", value=False)
         
         submit_sess = st.form_submit_button("Create Session", type="primary")
@@ -142,7 +142,7 @@ with tab2:
                         st.warning("Could not verify location. Bypassing Geo-Fence securely.")
                     
             # 2. Smart Timetable Check
-            if allowed and enforce_time:
+            if allowed and not is_extra:
                 if admin_bypass:
                     st.warning("🚨 Admin Override Active: Timetable Restrictions Bypassed for Special Event.")
                 else:
@@ -153,10 +153,16 @@ with tab2:
                     else:
                         curr_time = datetime.now().strftime("%H:%M")
                         if curr_time < sched["start"] or curr_time > sched["end"]:
-                            st.error(f"⏱️ Timetable Blocked: The '{dept}' schedule is strictly between {sched['start']} and {sched['end']}. It is currently {curr_time}. Contact Admin to activate the Special Event portal.")
+                            st.error(f"⏱️ Timetable Blocked: The '{dept}' schedule is strictly between {sched['start']} and {sched['end']}. It is currently {curr_time}. Contact Admin to activate the Special Event portal or check 'Extra Class'.")
                             allowed = False
                         else:
                             st.success(f"⏱️ Timetable Passed: Session is operating within the legal {sched['start']} - {sched['end']} timeframe.")
+            elif allowed and is_extra:
+                if admin_bypass:
+                    st.warning("🚨 Admin Override Active: Timetable Restrictions Bypassed for Special Event.")
+                else:
+                    st.success("🌟 Extra Class Authorized: Standard Timetable bypassed securely.")
+                    subject = f"{subject} (Extra Class)"
             
             # Final Approval
             if allowed:
