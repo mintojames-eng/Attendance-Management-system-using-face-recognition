@@ -5,11 +5,21 @@ def apply_custom_css():
         <style>
             /* Main Background and text */
             .stApp {
-                background-color: #0E1117;
-                color: #FAFAFA;
+                background: radial-gradient(circle at 15% 50%, #151a24 0%, #0E1117 40%, #050608 100%);
+                color: #e5eaf5;
+                font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
             }
             
-            /* Hide Streamlit Branding */
+            /* Sleek dividers */
+            hr {
+                border: 0;
+                height: 1px;
+                background-image: linear-gradient(to right, rgba(0, 224, 150, 0), rgba(0, 224, 150, 0.4), rgba(0, 224, 150, 0));
+                margin-top: 2rem;
+                margin-bottom: 2rem;
+            }
+            
+            /* Hide Streamlit Branding securely while saving chevron toggle */
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             .stDeployButton {display:none;}
@@ -18,90 +28,131 @@ def apply_custom_css():
             /* Buttons Styling */
             .stButton > button {
                 width: 100%;
-                border-radius: 8px;
-                height: 3em;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                border: 1px solid #1f2733;
-                background-color: #1E222A;
+                border-radius: 12px;
+                height: 3.2em;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+                border: 1px solid rgba(255,255,255,0.08);
+                background: linear-gradient(180deg, #1f2533 0%, #161a24 100%);
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
             }
             .stButton > button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,224,150,0.2) !important;
-                border-color: #00E096;
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(0, 224, 150, 0.25), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+                border-color: rgba(0, 224, 150, 0.5);
                 color: #00E096;
             }
-            .stButton > button[data-baseweb="button"] {
-                /* Primary button specifically */
+            .stButton > button:active {
+                transform: translateY(1px);
+                box-shadow: 0 2px 5px rgba(0, 224, 150, 0.2) !important;
+            }
+            
+            /* Primary Button (e.g. Create Session) overrides Streamlit native matching */
+            .stButton > button[kind="primary"] {
+                background: linear-gradient(135deg, #00E096 0%, #00a36c 100%);
+                border: none;
+                color: #ffffff;
+                box-shadow: 0 4px 10px rgba(0, 224, 150, 0.3);
+            }
+            .stButton > button[kind="primary"]:hover {
+                color: #ffffff;
+                box-shadow: 0 8px 20px rgba(0, 224, 150, 0.5) !important;
             }
             
             /* Inputs Styling (Text, Selectboxes) */
             .stTextInput > div > div > input,
             .stSelectbox > div > div > div {
-                border-radius: 8px !important;
-                border: 1px solid #2b3543 !important;
-                background-color: #151920 !important;
-                color: white !important;
-                padding: 10px !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
+                background-color: rgba(20, 25, 35, 0.5) !important;
+                color: #ffffff !important;
+                padding: 12px 15px !important;
+                transition: all 0.3s ease;
             }
             
             .stTextInput > div > div > input:focus,
             .stSelectbox > div > div > div:focus {
                 border-color: #00E096 !important;
-                box-shadow: 0 0 0 1px #00E096 !important;
+                background-color: rgba(20, 25, 35, 0.8) !important;
+                box-shadow: 0 0 0 2px rgba(0, 224, 150, 0.3) !important;
             }
 
-            /* Container Cards */
+            /* Container Cards via Glassmorphism */
             div[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"] {
-                background: linear-gradient(145deg, #161922, #1a1e27);
-                border-radius: 12px;
-                padding: 20px;
-                border: 1px solid #232a35;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                margin-bottom: 15px;
+                background: rgba(22, 26, 36, 0.3);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-radius: 16px;
+                padding: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+                margin-bottom: 20px;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            div[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"]:hover {
+                box-shadow: 0 12px 40px -10px rgba(0,224,150,0.1);
             }
 
             /* Tabs styling */
             .stTabs [data-baseweb="tab-list"] {
-                gap: 24px;
+                gap: 8px;
+                background-color: rgba(15, 20, 28, 0.4);
+                border-radius: 12px;
+                padding: 5px;
+                margin-bottom: 10px;
             }
             .stTabs [data-baseweb="tab"] {
-                height: 50px;
+                height: 45px;
                 white-space: pre-wrap;
                 background-color: transparent;
-                border-radius: 4px 4px 0px 0px;
-                gap: 1px;
-                padding-top: 10px;
-                padding-bottom: 10px;
+                border-radius: 8px;
+                padding: 10px 20px;
+                transition: all 0.2s ease;
+                color: #8b949e;
             }
             .stTabs [aria-selected="true"] {
-                border-bottom: 2px solid #00E096 !important;
+                background-color: #1e2430 !important;
                 color: #00E096 !important;
-                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-bottom: none !important;
             }
             
             /* Metrics styling */
             [data-testid="stMetricValue"] {
-                font-size: 3rem !important;
-                color: #00E096;
-                font-weight: 700;
+                font-size: 3.5rem !important;
+                color: #00B4DB;
+                font-weight: 800;
+                letter-spacing: -1px;
+                text-shadow: 0 2px 10px rgba(0, 180, 219, 0.2);
             }
             [data-testid="stMetricLabel"] {
-                font-size: 1rem !important;
-                color: #a3a8b8;
-                font-weight: 500;
+                font-size: 1.1rem !important;
+                color: #8b949e;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
             }
             
             /* Headings */
             h1, h2, h3 {
-                font-family: 'Inter', sans-serif !important;
+                font-family: 'Inter', system-ui, sans-serif !important;
                 color: #E2E8F0 !important;
                 font-weight: 800;
             }
             h1 {
-                background: -webkit-linear-gradient(45deg, #00E096, #00B4DB);
+                background: linear-gradient(120deg, #00E096, #00B4DB, #00E096);
+                background-size: 200% auto;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
+                animation: shine 4s linear infinite;
+                letter-spacing: -0.5px;
+            }
+            @keyframes shine {
+                to {
+                    background-position: 200% center;
+                }
             }
             
             /* Checkbox */
