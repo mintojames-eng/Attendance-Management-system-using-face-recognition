@@ -84,6 +84,8 @@ with tab2:
     with st.form("session_setup"):
         dept = st.text_input("Department (e.g. IT, CS)")
         year = st.text_input("Year (e.g. TE, BE)")
+        subject = st.text_input("Subject (e.g. Data Structures)")
+        session_code = st.text_input("Session Code (e.g. DS101)")
         
         st.markdown("### 🔒 Security Gates")
         enforce_geo = st.checkbox("Enforce Geo-Fencing (Must be within 5km of Campus)", value=True)
@@ -128,11 +130,11 @@ with tab2:
             # Final Approval
             if allowed:
                 st.session_state.current_session = {
-                    "department": dept, "year": year, "created_at": datetime.now()
+                    "department": dept, "year": year, "subject": subject, "session_code": session_code, "created_at": datetime.now()
                 }
                 db.active_sessions.update_one(
                     {"teacher_email": st.session_state.user['email']},
-                    {"$set": {"department": dept, "year": year, "allow_self": allow_self, "active": True}},
+                    {"$set": {"department": dept, "year": year, "subject": subject, "session_code": session_code, "allow_self": allow_self, "active": True}},
                     upsert=True
                 )
                 st.success("Session configured and live!")

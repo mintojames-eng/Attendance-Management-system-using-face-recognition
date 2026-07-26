@@ -66,7 +66,16 @@ def perform_eda(df):
     plt.savefig('attendance_distribution.png')
     print("Saved attendance_distribution.png")
     
-    # 3. Overall Present vs Absent Ratio
+    # 3. Bar Chart of Total Attendance per Department
+    agg_df = present_df.groupby('Department')['Count'].sum().reset_index()
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=agg_df, x='Department', y='Count', palette="viridis")
+    plt.title('Total Attendance Count by Department')
+    plt.ylabel('Total Present Students')
+    plt.savefig('attendance_bar_chart.png')
+    print("Saved attendance_bar_chart.png")
+    
+    # 4. Overall Present vs Absent Ratio
     total_agg = df.groupby('Status')['Count'].sum()
     plt.figure(figsize=(7, 7))
     plt.pie(total_agg, labels=total_agg.index, autopct='%1.1f%%', colors=['#ff9999','#66b3ff'], startangle=90)
