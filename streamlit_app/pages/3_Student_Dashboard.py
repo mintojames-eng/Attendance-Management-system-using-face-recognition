@@ -80,6 +80,22 @@ with tab7:
         ax.pie(subj_counts.values(), labels=subj_counts.keys(), autopct="%1.1f%%", startangle=90, colors=sns.color_palette("pastel"))
         ax.axis("equal")
         st.pyplot(fig)
+        
+        st.write("---")
+        st.write("##### Academic Variance (Distribution Box Plot)")
+        grades = list(db.academic_grades.find({"student_id": email}))
+        if not grades:
+            st.info("Insufficient graded assessments logged to map structural variance yet.")
+        else:
+            g_pts = [{"Subject": g["subject"], "Score (%)": (g["score"] / g["max_score"]) * 100} for g in grades]
+            df_bp = pd.DataFrame(g_pts)
+            fig2, ax2 = plt.subplots(figsize=(8,3))
+            fig2.patch.set_alpha(0.0)
+            sns.boxplot(data=df_bp, x="Score (%)", y="Subject", orient="h", ax=ax2, palette="coolwarm")
+            ax2.set_xlabel("Score Percentage (%)", color="#b0b5c4")
+            ax2.set_ylabel("", color="#b0b5c4")
+            ax2.tick_params(colors="#b0b5c4")
+            st.pyplot(fig2)
 
 with tab6:
     st.subheader("Profile Settings")
