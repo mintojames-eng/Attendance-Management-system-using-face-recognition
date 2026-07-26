@@ -386,7 +386,7 @@ with tab4:
     if not students:
         st.warning("No registered students found.")
     else:
-        student_opts = {s["email"]: f"{s['name']} ({s['email']})" for s in students}
+        student_opts = {s["email"]: f"{s.get('username', 'Unknown')} ({s['email']})" for s in students}
         
         with st.form("grade_form"):
             target = st.selectbox("Select Student:", options=list(student_opts.keys()), format_func=lambda x: student_opts[x])
