@@ -38,6 +38,15 @@ def signup_user(email, password, username, user_type, extra_data=None):
         if col.find_one({"email": email}):
             return {"error": "Email already registered."}
             
+    # Strictly enforce uniqueness for students (Name & Student ID)
+    if user_type == "student":
+        if db.auth_users.find_one({"username": {"$regex": f"^{username}$", "$options": "i"}}):
+            return {"error": "A student with this exact name is already registered."}
+            
+        student_id = extra_data.get("studentId", "")
+        if student_id and db.auth_users.find_one({"studentId": student_id}):
+            return {"error": "This Student ID is already registered to another account."}
+            
     hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode("utf-8")
     
     user_doc = {
