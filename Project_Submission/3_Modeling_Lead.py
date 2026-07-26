@@ -18,7 +18,7 @@ class FaceRecognitionPipeline:
         print("Initializing AI Models...")
         self.detector = MTCNN()
         self.model_name = "Facenet512"
-        self.similarity_threshold = 0.70  # Optimal threshold for cosine distance
+        self.similarity_threshold = 0.30  # Optimal threshold for cosine distance
         print(f"Models loaded. Using {self.model_name} with target threshold {self.similarity_threshold}.")
 
     def detect_and_crop_faces(self, image_np):

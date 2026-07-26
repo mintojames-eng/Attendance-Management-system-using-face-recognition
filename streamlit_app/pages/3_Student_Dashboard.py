@@ -317,7 +317,7 @@ with tab5:
                                     live_embed = res[0]['embedding']
                                     dist = cosine(live_embed, self.my_embedding)
                                     
-                                    if dist < 0.7:
+                                    if dist < 0.30:
                                         with self.lock: self.overlay = {'box': (x,y,w,h), 'text': "VERIFIED!", 'color': (0,255,0)}
                                         # Log attendance instantly
                                         date_key = datetime.now().strftime("%Y-%m-%d")

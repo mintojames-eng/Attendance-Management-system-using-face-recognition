@@ -195,7 +195,7 @@ with tab2:
                                 for u in self.users:
                                     if 'embedding' in u:
                                         dist = cosine(live_embed, u['embedding'])
-                                        if dist < best_dist and dist < 0.7:
+                                        if dist < best_dist and dist < 0.30:
                                             best_dist = dist
                                             label = u['name']
                                             color = (0, 255, 0) # Green
