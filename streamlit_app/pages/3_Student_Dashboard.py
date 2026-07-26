@@ -53,10 +53,13 @@ with tab7:
         for r in att_records:
             subj = r.get("subject", r.get("department", "General Class"))
             subj_counts[subj] = subj_counts.get(subj, 0) + 1
+            
+            # Collapse duplicates intrinsically per session
             for s in r.get("students", []):
                 if s.get("name") == name and s.get("present"):
                     dates.append({"Date": r["session_id"].split("_")[-1]})
-        
+                    break # Critical to prevent legacy duplication explosion
+                    
         c1, c2 = st.columns(2)
         with c1:
             st.write("##### Presences By Subject (Bar Chart)")
@@ -73,9 +76,8 @@ with tab7:
                 
         st.write("##### Total Subject Attendance Ratio (Pie Chart)")
         fig, ax = plt.subplots(figsize=(5,3))
-        # Ensure dark backgrounds in Streamlit don't crush the standard text by setting styling transparent 
         fig.patch.set_alpha(0.0) 
-        ax.pie(subj_counts.values(), labels=subj_counts.keys(), autopct="%1.1f%%", startangle=90, colors=sns.color_palette("pastel"), textprops={'color':"w"})
+        ax.pie(subj_counts.values(), labels=subj_counts.keys(), autopct="%1.1f%%", startangle=90, colors=sns.color_palette("pastel"))
         ax.axis("equal")
         st.pyplot(fig)
 
