@@ -382,7 +382,7 @@ with tab4:
     st.write("Upload assessment scores directly to a student's official transcript.")
     
     # Fetch all students from users db to select
-    students = list(db.users.find({"role": "student"}))
+    students = list(db.auth_users.find({"role": "student"}))
     if not students:
         st.warning("No registered students found.")
     else:
