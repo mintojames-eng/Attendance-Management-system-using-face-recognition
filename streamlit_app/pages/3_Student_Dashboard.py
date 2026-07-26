@@ -167,53 +167,57 @@ with tab3:
                     def __init__(self):
                         self.detector = MTCNN()
                         self.registered = False
-                        self.frame_count = 0
                         self.overlay = None
                         self.user_email = user_email
                         self.user_name = user_name
+                        self.is_processing = False
+                        
+                    def process_frame(self, rgb_image):
+                        try:
+                            faces = self.detector.detect_faces(rgb_image)
+                            if len(faces) == 1:
+                                x, y, w, h = faces[0]['box']
+                                x, y = max(0, x), max(0, y)
+                                face_img = rgb_image[y:y+h, x:x+w]
+                                
+                                self.overlay = {'box': (x,y,w,h), 'text': "Extracting Geometric Vector..."}
+                                
+                                # DeepFace represent
+                                try:
+                                    embedding_res = DeepFace.represent(face_img, model_name='Facenet512', detector_backend='skip', enforce_detection=False)
+                                    if embedding_res:
+                                        embedding = embedding_res[0]['embedding']
+                                        
+                                        # Save permanently to MongoDB users collection
+                                        att_db.users.update_one(
+                                            {'user_id': self.user_email},
+                                            {'$set': {'name': self.user_name, 'embedding': embedding}},
+                                            upsert=True
+                                        )
+                                        self.registered = True
+                                        self.overlay = None
+                                except Exception:
+                                    pass
+                            elif len(faces) > 1:
+                                self.overlay = {'msg': "Too many faces! Please be alone in frame.", 'color': (0,0,255)}
+                            else:
+                                self.overlay = {'msg': "Looking for a clear face...", 'color': (0,0,255)}
+                        except Exception:
+                            pass
+                            
+                        self.is_processing = False
                         
                     def recv(self, frame):
+                        import threading
                         img = frame.to_ndarray(format="bgr24")
                         if self.registered:
                             cv2.putText(img, "Registration Complete! You can stop the camera.", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                             return av.VideoFrame.from_ndarray(img, format="bgr24")
                             
-                        self.frame_count += 1
-                        
-                        if self.frame_count % 15 == 0:
+                        if not self.is_processing:
+                            self.is_processing = True
                             rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                            self.overlay = None
-                            try:
-                                faces = self.detector.detect_faces(rgb_image)
-                                if len(faces) == 1:
-                                    x, y, w, h = faces[0]['box']
-                                    x, y = max(0, x), max(0, y)
-                                    face_img = rgb_image[y:y+h, x:x+w]
-                                    
-                                    self.overlay = {'box': (x,y,w,h), 'text': "Extracting Geometric Vector..."}
-                                    
-                                    # DeepFace represent
-                                    try:
-                                        embedding_res = DeepFace.represent(face_img, model_name='Facenet512', detector_backend='skip', enforce_detection=False)
-                                        if embedding_res:
-                                            embedding = embedding_res[0]['embedding']
-                                            
-                                            # Save permanently to MongoDB users collection
-                                            att_db.users.update_one(
-                                                {'user_id': self.user_email},
-                                                {'$set': {'name': self.user_name, 'embedding': embedding}},
-                                                upsert=True
-                                            )
-                                            self.registered = True
-                                            self.overlay = None
-                                    except Exception:
-                                        pass
-                                elif len(faces) > 1:
-                                    self.overlay = {'msg': "Too many faces! Please be alone in frame.", 'color': (0,0,255)}
-                                else:
-                                    self.overlay = {'msg': "Looking for a clear face...", 'color': (0,0,255)}
-                            except Exception:
-                                pass
+                            threading.Thread(target=self.process_frame, args=(rgb_image,)).start()
 
                         # Draw cached overlay to keep video stream running at 30 FPS
                         if self.overlay:
