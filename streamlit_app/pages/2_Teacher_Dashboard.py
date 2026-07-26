@@ -129,12 +129,13 @@ with tab2:
             
             # Final Approval
             if allowed:
+                now_stamp = datetime.now()
                 st.session_state.current_session = {
-                    "department": dept, "year": year, "subject": subject, "session_code": session_code, "created_at": datetime.now()
+                    "department": dept, "year": year, "subject": subject, "session_code": session_code, "created_at": now_stamp
                 }
                 db.active_sessions.update_one(
                     {"teacher_email": st.session_state.user['email']},
-                    {"$set": {"department": dept, "year": year, "subject": subject, "session_code": session_code, "allow_self": allow_self, "active": True}},
+                    {"$set": {"department": dept, "year": year, "subject": subject, "session_code": session_code, "created_at": now_stamp, "allow_self": allow_self, "active": True}},
                     upsert=True
                 )
                 st.success("Session configured and live!")

@@ -249,7 +249,8 @@ with tab5:
     sess_id = ""
     
     if active_session:
-        elapsed = (datetime.now() - active_session["created_at"]).total_seconds() / 60.0
+        session_time = active_session.get("created_at", datetime.now())
+        elapsed = (datetime.now() - session_time).total_seconds() / 60.0
         if elapsed > 5.0:
             db.active_sessions.delete_one({"_id": active_session["_id"]})
             active_session = None
