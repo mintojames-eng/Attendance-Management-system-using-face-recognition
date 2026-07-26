@@ -184,7 +184,15 @@ with tab2:
             date_key = datetime.now().strftime("%Y-%m-%d")
             sess_id = f"{st.session_state.current_session['session_code']}_{date_key}"
             record = db.attendance_records.find_one({"session_id": sess_id})
-            st.session_state.popped_present = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")]))) if record else []
+            
+            # Calculate Present vs Absent for automatic Stop
+            present_names = sorted(list(set([s["name"] for s in record.get("students", []) if s.get("present")]))) if record else []
+            all_students = [u["name"] for u in list(att_db.users.find())]
+            absent_names = sorted([n for n in all_students if n not in present_names])
+            
+            st.session_state.popped_present = present_names
+            st.session_state.popped_absent = absent_names
+            st.session_state.popped_sess_id = sess_id
             
             db.active_sessions.delete_one({"teacher_email": st.session_state.user['email']})
             del st.session_state.current_session
